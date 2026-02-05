@@ -8,12 +8,14 @@
       previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      { id: "video1", src: "2.mp4", srcMob: "3.mp4", step: "step-1", loop: false },
-      { id: "video2", src: "2.mp4", srcMob: "3.mp4", step: "step-2", loop: true },
-      { id: "video3", src: "2.mp4", srcMob: "3.mp4", step: "step-3", loop: false },
-      { id: "video4", src: "2.mp4", srcMob: "3.mp4", step: "step-4", loop: true },
-      { id: "video5", src: "2.mp4", srcMob: "3.mp4", step: "step-5", loop: false },
-    ],
+          { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
+          { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
+          { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", loop: false },
+          { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },
+          { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", loop: false },
+          { id: "video6", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-6", loop: true },
+          { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
+        ],
   };
 
   let modalOverlay, modalContent, videoButton, closeButton, allVideos, allQuizzes;
@@ -72,17 +74,13 @@
       video.muted = true;
       video.setAttribute("playsinline", "");
       video.dataset.step = step.step;
-      video.dataset.srcDesk = step.src;
-      video.dataset.srcMob = step.srcMob;
+      
+      // УДАЛИЛИ СМЕНУ SRC В playVideo. Устанавливаем всё сразу здесь.
+      video.src = isMobile() ? step.srcMob : step.src;
       video.preload = "auto";
 
       if (step.loop) video.setAttribute("data-loop", "");
       
-      // Предзагружаем сразу путь для первого видео
-      if (index === 0) {
-        video.src = isMobile() ? step.srcMob : step.src;
-      }
-
       vVideos.appendChild(video);
 
       const quiz = document.createElement("div");
@@ -145,23 +143,13 @@
     const targetVideo = document.getElementById(videoId);
     if (!targetVideo) return;
 
-    // Сбрасываем квизы
+    // Скрываем квизы
     allQuizzes.forEach((q) => q.classList.remove("is-visible"));
 
-    const correctSrc = isMobile() ? targetVideo.dataset.srcMob : targetVideo.dataset.srcDesk;
-    
-    // Проверяем src, чтобы не перезагружать лишний раз
-    if (!targetVideo.src || targetVideo.src.indexOf(correctSrc) === -1) {
-      targetVideo.src = correctSrc;
-      targetVideo.load();
-    }
-
-    // Скрываем все видео кроме целевого, чтобы не было наслоения звука или кадров
+    // Переключаем display без перезагрузки src и вызова load()
     allVideos.forEach(v => {
-        if(v !== targetVideo) {
-            v.pause();
-            v.style.display = "none";
-        }
+        v.pause();
+        v.style.display = "none";
     });
 
     targetVideo.style.display = "block";
@@ -190,11 +178,14 @@
   function resetUI() {
     allVideos.forEach((v) => {
       v.pause();
-      // Оставляем только видео1 видимым, чтобы при открытии не было пустоты
-      v.style.display = v.id === "video1" ? "block" : "none";
+      v.style.display = "none";
       v.loop = false;
       v.ontimeupdate = null;
     });
+    // Подготавливаем первое видео к следующему открытию
+    const v1 = document.getElementById("video1");
+    if (v1) v1.style.display = "block";
+    
     allQuizzes.forEach((q) => q.classList.remove("is-visible"));
   }
 
@@ -224,12 +215,11 @@
       .v-videos { background: #000; width: 100%; height: 100%; }
       .v-videos video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
       
-      /* Чтобы не было пинга, видео1 всегда готово к показу */
       .v-videos video#video1 { display: block; }
 
-      .v-quiz { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.8s; z-index: 10; background: rgba(0,0,0,0.3); }
+      .v-quiz { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.8s; z-index: 10; ; }
       .v-quiz.is-visible { opacity: 1; visibility: visible; }
-      .v-quiz__btn { position: absolute; inset: 0; background: red; opacity: 0.3; border: none; cursor: pointer; }
+      .v-quiz__btn { position: absolute; inset: 0; background: transparent;  border: 5px solid red; cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
       @media (max-width: 768px) {
         .v-trigger { width: 100px; height: 100px; bottom: 20px; right: 20px; }

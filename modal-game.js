@@ -3,22 +3,72 @@
 
   const config = {
     quizAppearanceBeforeEnd: 1.5,
+    switchBufferTime: 200, // Время задержки перед скрытием старого видео (мс)
     trigger: {
-      bgImage: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
-      previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
+      bgImage:
+        "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
+      previewVideo:
+        "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
-      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
-      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", autoNext: true }, // Пометка для автоперехода
-      { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },
-      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", autoNext: true }, // Пометка для автоперехода
-      { id: "video6", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-6", loop: true },
-      { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
+      {
+        id: "video1",
+        src: "1.mp4",
+        srcMob: "1.mp4",
+        step: "step-1",
+        loop: false,
+      },
+      {
+        id: "video2",
+        src: "2.mp4",
+        srcMob: "2.mp4",
+        step: "step-2",
+        loop: false,
+      },
+      {
+        id: "video3",
+        src: "3.mp4",
+        srcMob: "3.mp4",
+        step: "step-3",
+        autoNext: true,
+      },
+      {
+        id: "video4",
+        src: "4,6.mp4",
+        srcMob: "4,6.mp4",
+        step: "step-4",
+        loop: true,
+      },
+      {
+        id: "video5",
+        src: "5.mp4",
+        srcMob: "5.mp4",
+        step: "step-5",
+        autoNext: true,
+      },
+      {
+        id: "video6",
+        src: "4,6.mp4",
+        srcMob: "4,6.mp4",
+        step: "step-6",
+        loop: true,
+      },
+      {
+        id: "video7",
+        src: "7.mp4",
+        srcMob: "7.mp4",
+        step: "step-7",
+        loop: false,
+      },
     ],
   };
 
-  let modalOverlay, modalContent, videoButton, closeButton, allVideos, allQuizzes;
+  let modalOverlay,
+    modalContent,
+    videoButton,
+    closeButton,
+    allVideos,
+    allQuizzes;
   const isMobile = () => window.innerWidth <= 768;
 
   function createTrigger(conf) {
@@ -63,12 +113,16 @@
       const video = document.createElement("video");
       video.id = step.id;
       video.muted = true;
-      video.preload = "auto"; 
-      video.setAttribute("muted", "");
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
+      video.preload = "auto";
+      video.playsinline = true;
+      video.webkitPlaysinline = true;
       video.dataset.step = step.step;
       video.src = isMobile() ? step.srcMob : step.src;
+
+      // Изначально все скрыты, кроме первого
+      video.style.display = index === 0 ? "block" : "none";
+      video.style.zIndex = index === 0 ? "2" : "1";
+
       if (step.loop) video.setAttribute("data-loop", "");
       vVideos.appendChild(video);
       video.load();
@@ -100,34 +154,62 @@
     allQuizzes = modalOverlay.querySelectorAll(".v-quiz");
   }
 
+  function openModal() {
+    modalOverlay.style.display = "flex";
+    setTimeout(() => {
+      modalOverlay.style.opacity = "1";
+      modalContent.style.transform = "translateY(0)";
+    }, 10);
+    document.body.style.overflow = "hidden";
+    playVideo("video1");
+  }
+
+  function closeModal() {
+    modalOverlay.style.opacity = "0";
+    modalContent.style.transform = "translateY(30px)";
+    setTimeout(() => {
+      modalOverlay.style.display = "none";
+      document.body.style.overflow = "";
+      resetUI();
+    }, 300);
+  }
+
   function playVideo(videoId) {
     const targetVideo = document.getElementById(videoId);
     if (!targetVideo) return;
 
-    const currentVideo = Array.from(allVideos).find(v => v.classList.contains("v-playing"));
-    const stepConfig = config.steps.find(s => s.id === videoId);
+    // Ищем то, что играет сейчас
+    const currentVideo = Array.from(allVideos).find((v) =>
+      v.classList.contains("v-playing"),
+    );
+    const stepConfig = config.steps.find((s) => s.id === videoId);
 
-    // Скрываем все квизы мгновенно
+    // Скрываем квизы
     allQuizzes.forEach((q) => {
       q.classList.remove("is-visible");
       q.style.display = "none";
     });
 
+    // Новое видео: показываем, но пока под старым
     targetVideo.style.display = "block";
     targetVideo.style.zIndex = "1";
     targetVideo.currentTime = 0;
 
     const onPlaying = () => {
-      targetVideo.style.zIndex = "2";
+      // Когда новое видео реально начало играть:
+      targetVideo.style.zIndex = "2"; // Выводим наверх
       targetVideo.classList.add("v-playing");
 
+      // Скрываем старое через задержку (setTimeout)
       if (currentVideo && currentVideo !== targetVideo) {
-        currentVideo.pause();
-        currentVideo.style.display = "none";
-        currentVideo.style.zIndex = "1";
-        currentVideo.classList.remove("v-playing");
-        currentVideo.onended = null;
-        currentVideo.ontimeupdate = null;
+        setTimeout(() => {
+          currentVideo.pause();
+          currentVideo.style.display = "none";
+          currentVideo.style.zIndex = "1";
+          currentVideo.classList.remove("v-playing");
+          currentVideo.onended = null;
+          currentVideo.ontimeupdate = null;
+        }, config.switchBufferTime);
       }
       targetVideo.removeEventListener("playing", onPlaying);
     };
@@ -139,19 +221,21 @@
       showQuiz(targetVideo.dataset.step);
     } else {
       targetVideo.loop = false;
-      
-      // ПОКАЗЫВАЕМ КНОПКУ ТОЛЬКО ЕСЛИ ЭТО НЕ АВТО-ПЕРЕХОД (не 3 и не 5)
       targetVideo.ontimeupdate = () => {
-        if (!stepConfig.autoNext && targetVideo.duration > 0 && targetVideo.duration - targetVideo.currentTime <= config.quizAppearanceBeforeEnd) {
+        if (
+          !stepConfig.autoNext &&
+          targetVideo.duration > 0 &&
+          targetVideo.duration - targetVideo.currentTime <=
+            config.quizAppearanceBeforeEnd
+        ) {
           showQuiz(targetVideo.dataset.step);
           targetVideo.ontimeupdate = null;
         }
       };
 
-      // АВТОМАТИЧЕСКИЙ ПЕРЕХОД (для 3 и 5)
       if (stepConfig.autoNext) {
         targetVideo.onended = () => {
-          const currentIndex = config.steps.findIndex(s => s.id === videoId);
+          const currentIndex = config.steps.findIndex((s) => s.id === videoId);
           const next = config.steps[currentIndex + 1];
           if (next) playVideo(next.id);
         };
@@ -169,18 +253,12 @@
   }
 
   function resetUI() {
-    allVideos.forEach((v) => {
+    allVideos.forEach((v, index) => {
       v.pause();
-      v.style.display = "none";
       v.classList.remove("v-playing");
-      v.style.zIndex = "1";
+      v.style.display = index === 0 ? "block" : "none";
+      v.style.zIndex = index === 0 ? "2" : "1";
     });
-    const v1 = document.getElementById("video1");
-    if (v1) {
-      v1.style.display = "block";
-      v1.classList.add("v-playing");
-      v1.style.zIndex = "2";
-    }
     allQuizzes.forEach((q) => {
       q.classList.remove("is-visible");
       q.style.display = "none";
@@ -188,15 +266,7 @@
   }
 
   function setupEventListeners() {
-    videoButton.addEventListener("click", () => {
-      modalOverlay.style.display = "flex";
-      setTimeout(() => {
-        modalOverlay.style.opacity = "1";
-        modalContent.style.transform = "translateY(0)";
-      }, 10);
-      document.body.style.overflow = "hidden";
-      playVideo("video1");
-    });
+    videoButton.addEventListener("click", openModal);
     closeButton.addEventListener("click", closeModal);
     modalOverlay.addEventListener("click", (e) => {
       if (e.target === modalOverlay) closeModal();
@@ -205,16 +275,6 @@
       if (btn.hasAttribute("data-done")) closeModal();
       else playVideo(btn.dataset.video);
     });
-  }
-
-  function closeModal() {
-    modalOverlay.style.opacity = "0";
-    modalContent.style.transform = "translateY(30px)";
-    setTimeout(() => {
-      modalOverlay.style.display = "none";
-      document.body.style.overflow = "";
-      resetUI();
-    }, 300);
   }
 
   function addResponsiveStyles() {
@@ -227,7 +287,7 @@
       .v-modal__overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 110001; opacity: 0; transition: opacity 0.3s ease; cursor: pointer; }
       .v-modal__modal { background: #000; border-radius: 12px; overflow: hidden; position: relative; transform: translateY(30px); transition: transform 0.3s ease; max-width: 80vw; aspect-ratio: 16/9; width: 100%; }
       .v-modal__container, .v-videos { width: 100%; height: 100%; position: relative; }
-      .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+      .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
       .v-quiz { position: absolute; inset: 0; z-index: 10; display: none; }
       .v-quiz.is-visible { display: block; }
       .v-quiz__btn { position: absolute; inset: 0; background: transparent; border: 5px solid red; cursor: pointer; }
@@ -240,7 +300,11 @@
     document.head.appendChild(style);
   }
 
-  addResponsiveStyles();
-  renderGame();
-  setupEventListeners();
+  function init() {
+    addResponsiveStyles();
+    renderGame();
+    setupEventListeners();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
 })();

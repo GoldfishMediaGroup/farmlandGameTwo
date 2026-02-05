@@ -3,7 +3,7 @@
 
   const config = {
     quizAppearanceBeforeEnd: 1.5,
-    switchBufferTime: 200, // Время задержки перед скрытием старого видео (мс)
+    switchBufferTime: 200,
     trigger: {
       bgImage:
         "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
@@ -11,55 +11,13 @@
         "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      {
-        id: "video1",
-        src: "1.mp4",
-        srcMob: "1.mp4",
-        step: "step-1",
-        loop: false,
-      },
-      {
-        id: "video2",
-        src: "2.mp4",
-        srcMob: "2.mp4",
-        step: "step-2",
-        loop: false,
-      },
-      {
-        id: "video3",
-        src: "3.mp4",
-        srcMob: "3.mp4",
-        step: "step-3",
-        autoNext: true,
-      },
-      {
-        id: "video4",
-        src: "4,6.mp4",
-        srcMob: "4,6.mp4",
-        step: "step-4",
-        loop: true,
-      },
-      {
-        id: "video5",
-        src: "5.mp4",
-        srcMob: "5.mp4",
-        step: "step-5",
-        autoNext: true,
-      },
-      {
-        id: "video6",
-        src: "4,6.mp4",
-        srcMob: "4,6.mp4",
-        step: "step-6",
-        loop: true,
-      },
-      {
-        id: "video7",
-        src: "7.mp4",
-        srcMob: "7.mp4",
-        step: "step-7",
-        loop: false,
-      },
+      { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
+      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
+      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", autoNext: true },
+      { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },
+      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", autoNext: true },
+      { id: "video6", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-6", loop: true },
+      { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
     ],
   };
 
@@ -69,7 +27,12 @@
     closeButton,
     allVideos,
     allQuizzes;
+
+  // Глобальный счетчик слоев, чтобы исключить наслоение "через один"
+  let currentZIndex = 10; 
+
   const isMobile = () => window.innerWidth <= 768;
+
 
   function createTrigger(conf) {
     const btn = document.createElement("button");
@@ -119,9 +82,9 @@
       video.dataset.step = step.step;
       video.src = isMobile() ? step.srcMob : step.src;
 
-      // Изначально все скрыты, кроме первого
-      video.style.display = index === 0 ? "block" : "none";
-      video.style.zIndex = index === 0 ? "2" : "1";
+      // При прогрузке ВСЕ видео в display: none
+      video.style.display = "none";
+      video.style.zIndex = "1";
 
       if (step.loop) video.setAttribute("data-loop", "");
       vVideos.appendChild(video);
@@ -130,6 +93,7 @@
       const quiz = document.createElement("div");
       quiz.className = "v-quiz";
       quiz.id = step.step;
+      quiz.style.display = "none";
       const btn = document.createElement("button");
       btn.className = "v-quiz__btn";
       if (index === conf.steps.length - 1) btn.dataset.done = "true";
@@ -178,37 +142,44 @@
     const targetVideo = document.getElementById(videoId);
     if (!targetVideo) return;
 
-    // Ищем то, что играет сейчас
+    // Ищем то, что реально играет сейчас
     const currentVideo = Array.from(allVideos).find((v) =>
       v.classList.contains("v-playing"),
     );
     const stepConfig = config.steps.find((s) => s.id === videoId);
 
-    // Скрываем квизы
-    allQuizzes.forEach((q) => {
-      q.classList.remove("is-visible");
-      q.style.display = "none";
-    });
+    // Скрываем квиз уходящего видео
+    if (currentVideo) {
+      const currentQuiz = document.getElementById(currentVideo.dataset.step);
+      if (currentQuiz) {
+        currentQuiz.classList.remove("is-visible");
+        currentQuiz.style.display = "none";
+      }
+    }
 
-    // Новое видео: показываем, но пока под старым
+    // Готовим новое видео: оно под текущим, пока не начнет играть
     targetVideo.style.display = "block";
-    targetVideo.style.zIndex = "1";
+    targetVideo.style.zIndex = currentZIndex; // Слой ниже или равен текущему
     targetVideo.currentTime = 0;
 
     const onPlaying = () => {
-      // Когда новое видео реально начало играть:
-      targetVideo.style.zIndex = "2"; // Выводим наверх
+      // Когда новое видео пошло — выводим его в ТОП
+      currentZIndex++; 
+      targetVideo.style.zIndex = currentZIndex; 
       targetVideo.classList.add("v-playing");
 
-      // Скрываем старое через задержку (setTimeout)
+      сconsole.log(targetVideo)
+
       if (currentVideo && currentVideo !== targetVideo) {
         setTimeout(() => {
-          currentVideo.pause();
-          currentVideo.style.display = "none";
-          currentVideo.style.zIndex = "1";
-          currentVideo.classList.remove("v-playing");
-          currentVideo.onended = null;
-          currentVideo.ontimeupdate = null;
+          // Проверка: не успели ли мы включить это видео снова (защита от багов)
+          if (!currentVideo.classList.contains("v-playing") || currentVideo !== targetVideo) {
+            currentVideo.pause();
+            currentVideo.style.display = "none";
+            currentVideo.classList.remove("v-playing");
+            currentVideo.onended = null;
+            currentVideo.ontimeupdate = null;
+          }
         }, config.switchBufferTime);
       }
       targetVideo.removeEventListener("playing", onPlaying);
@@ -244,25 +215,28 @@
     targetVideo.play().catch((e) => console.warn(e));
   }
 
+  function resetUI() {
+    currentZIndex = 10; // Сброс слоев
+    allVideos.forEach((v, index) => {
+      v.pause();
+      v.classList.remove("v-playing");
+      v.onended = null;
+      v.ontimeupdate = null;
+      v.style.display = "none";
+      v.style.zIndex = "1";
+    });
+    allQuizzes.forEach((q) => {
+      q.classList.remove("is-visible");
+      q.style.display = "none";
+    });
+  }
+
   function showQuiz(stepId) {
     const quiz = document.getElementById(stepId);
     if (quiz) {
       quiz.style.display = "block";
       quiz.classList.add("is-visible");
     }
-  }
-
-  function resetUI() {
-    allVideos.forEach((v, index) => {
-      v.pause();
-      v.classList.remove("v-playing");
-      v.style.display = index === 0 ? "block" : "none";
-      v.style.zIndex = index === 0 ? "2" : "1";
-    });
-    allQuizzes.forEach((q) => {
-      q.classList.remove("is-visible");
-      q.style.display = "none";
-    });
   }
 
   function setupEventListeners() {
@@ -287,8 +261,8 @@
       .v-modal__overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 110001; opacity: 0; transition: opacity 0.3s ease; cursor: pointer; }
       .v-modal__modal { background: #000; border-radius: 12px; overflow: hidden; position: relative; transform: translateY(30px); transition: transform 0.3s ease; max-width: 80vw; aspect-ratio: 16/9; width: 100%; }
       .v-modal__container, .v-videos { width: 100%; height: 100%; position: relative; }
-      .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-      .v-quiz { position: absolute; inset: 0; z-index: 10; display: none; }
+      .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none }
+      .v-quiz { position: absolute; inset: 0; z-index: 100000; display: none; }
       .v-quiz.is-visible { display: block; }
       .v-quiz__btn { position: absolute; inset: 0; background: transparent; border: 5px solid red; cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
@@ -307,4 +281,5 @@
   }
 
   document.addEventListener("DOMContentLoaded", init);
+
 })();

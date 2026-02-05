@@ -3,72 +3,24 @@
 
   const config = {
     quizAppearanceBeforeEnd: 1.5,
-    switchBufferTime: 200,
+    switchBufferTime: 300, // Увеличим чуть-чуть для надежности перекрытия
     trigger: {
-      bgImage:
-        "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
-      previewVideo:
-        "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
+      bgImage: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
+      previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      {
-        id: "video1",
-        src: "1.mp4",
-        srcMob: "1.mp4",
-        step: "step-1",
-        loop: false,
-      },
-      {
-        id: "video2",
-        src: "2.mp4",
-        srcMob: "2.mp4",
-        step: "step-2",
-        loop: false,
-      },
-      {
-        id: "video3",
-        src: "3.mp4",
-        srcMob: "3.mp4",
-        step: "step-3",
-        autoNext: true,
-      },
-      {
-        id: "video4",
-        src: "4,6.mp4",
-        srcMob: "4,6.mp4",
-        step: "step-4",
-        loop: true,
-      },
-      {
-        id: "video5",
-        src: "5.mp4",
-        srcMob: "5.mp4",
-        step: "step-5",
-        autoNext: true,
-      },
-      {
-        id: "video6",
-        src: "4,6.mp4",
-        srcMob: "4,6.mp4",
-        step: "step-6",
-        loop: true,
-      },
-      {
-        id: "video7",
-        src: "7.mp4",
-        srcMob: "7.mp4",
-        step: "step-7",
-        loop: false,
-      },
+      { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
+      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
+      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", autoNext: true },
+      { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },
+      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", autoNext: true },
+      { id: "video6", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-6", loop: true },
+      { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
     ],
   };
 
-  let modalOverlay,
-    modalContent,
-    videoButton,
-    closeButton,
-    allVideos,
-    allQuizzes;
+  let modalOverlay, modalContent, videoButton, closeButton, allVideos, allQuizzes;
+  let currentZIndex = 10;
 
   const isMobile = () => window.innerWidth <= 768;
 
@@ -120,9 +72,11 @@
       video.dataset.step = step.step;
       video.src = isMobile() ? step.srcMob : step.src;
 
-      // СКРЫВАЕМ ВСЕ ВИДЕО ПРИ ПРОГРУЗКЕ СТРАНИЦЫ (кроме первого)
-      video.style.display = index === 0 ? "block" : "none";
-      video.style.zIndex = index === 0 ? "2" : "1";
+      // СТРОГО: Все видео изначально прозрачные, но в display: block, 
+      // чтобы браузер не тратил время на создание элемента в момент перехода
+      video.style.display = "block";
+      video.style.opacity = "0";
+      video.style.zIndex = "1";
 
       if (step.loop) video.setAttribute("data-loop", "");
       vVideos.appendChild(video);
@@ -131,7 +85,7 @@
       const quiz = document.createElement("div");
       quiz.className = "v-quiz";
       quiz.id = step.step;
-      quiz.style.display = "none"; // Квизы тоже скрыты изначально
+      quiz.style.display = "none";
       const btn = document.createElement("button");
       btn.className = "v-quiz__btn";
       if (index === conf.steps.length - 1) btn.dataset.done = "true";
@@ -193,24 +147,26 @@
       }
     }
 
-    targetVideo.style.display = "block";
-    targetVideo.style.zIndex = "1";
     targetVideo.currentTime = 0;
-
+    
+    // ВАЖНО: Мы НЕ меняем opacity сразу. Ждем старта.
     const onPlaying = () => {
-      targetVideo.style.zIndex = "2";
+      currentZIndex++;
+      targetVideo.style.zIndex = currentZIndex;
+      targetVideo.style.opacity = "1"; // Новое видео проявляется поверх старого
       targetVideo.classList.add("v-playing");
 
-      console.log(targetVideo);
-
       if (currentVideo && currentVideo !== targetVideo) {
+        // У старого видео НЕ убираем opacity сразу, чтобы под новым не было дырки
         setTimeout(() => {
-          currentVideo.pause();
-          currentVideo.style.display = "none";
-          currentVideo.style.zIndex = "1";
-          currentVideo.classList.remove("v-playing");
-          currentVideo.onended = null;
-          currentVideo.ontimeupdate = null;
+          if (targetVideo.classList.contains("v-playing")) {
+            currentVideo.pause();
+            currentVideo.style.opacity = "0";
+            currentVideo.style.zIndex = "1";
+            currentVideo.classList.remove("v-playing");
+            currentVideo.onended = null;
+            currentVideo.ontimeupdate = null;
+          }
         }, config.switchBufferTime);
       }
       targetVideo.removeEventListener("playing", onPlaying);
@@ -224,12 +180,8 @@
     } else {
       targetVideo.loop = false;
       targetVideo.ontimeupdate = () => {
-        if (
-          !stepConfig.autoNext &&
-          targetVideo.duration > 0 &&
-          targetVideo.duration - targetVideo.currentTime <=
-            config.quizAppearanceBeforeEnd
-        ) {
+        if (!stepConfig.autoNext && targetVideo.duration > 0 && 
+            targetVideo.duration - targetVideo.currentTime <= config.quizAppearanceBeforeEnd) {
           showQuiz(targetVideo.dataset.step);
           targetVideo.ontimeupdate = null;
         }
@@ -247,14 +199,14 @@
   }
 
   function resetUI() {
-    allVideos.forEach((v, index) => {
+    currentZIndex = 10;
+    allVideos.forEach((v) => {
       v.pause();
       v.classList.remove("v-playing");
+      v.style.opacity = "0";
+      v.style.zIndex = "1";
       v.onended = null;
       v.ontimeupdate = null;
-      // Возвращаем исходное состояние скрытия
-      v.style.display = index === 0 ? "block" : "none";
-      v.style.zIndex = index === 0 ? "2" : "1";
     });
     allQuizzes.forEach((q) => {
       q.classList.remove("is-visible");
@@ -291,12 +243,23 @@
       .v-trigger__video { width: 80%; height: 70%; object-fit: contain; z-index: 2; border-radius: 50%; }
       .v-modal__overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 110001; opacity: 0; transition: opacity 0.3s ease; cursor: pointer; }
       .v-modal__modal { background: #000; border-radius: 12px; overflow: hidden; position: relative; transform: translateY(30px); transition: transform 0.3s ease; max-width: 80vw; aspect-ratio: 16/9; width: 100%; }
-      .v-modal__container, .v-videos { width: 100%; height: 100%; position: relative; }
-      .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none }
-      .v-quiz { position: absolute; inset: 0; z-index: 10; display: none; }
+      .v-modal__container, .v-videos { width: 100%; height: 100%; position: relative; background: #000; }
+      
+      .v-videos video { 
+        position: absolute; 
+        inset: 0; 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        opacity: 0;
+        transition: opacity 0.2s linear; /* Используем linear для более ровного наслоения */
+      }
+
+      .v-quiz { position: absolute; inset: 0; z-index: 999999; display: none; }
       .v-quiz.is-visible { display: block; }
       .v-quiz__btn { position: absolute; inset: 0; background: transparent; border: 5px solid red; cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
+      
       @media (max-width: 768px) {
         .v-trigger { width: 100px; height: 100px; bottom: 20px; }
         .v-modal__modal { max-width: 95vw; aspect-ratio: 1; }

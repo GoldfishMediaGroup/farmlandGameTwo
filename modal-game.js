@@ -8,7 +8,7 @@
       previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      { id: "video1", src: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/mobile.mp4", srcMob: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/mobile.mp4", step: "step-1", loop: false },
+      { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
       { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
       { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", loop: false },
       { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },

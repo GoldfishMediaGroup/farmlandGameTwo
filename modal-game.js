@@ -76,6 +76,12 @@
       video.dataset.srcMob = step.srcMob;
 
       if (step.loop) video.setAttribute("data-loop", "");
+      
+      if (index === 0) {
+        video.style.display = "block";
+        video.src = isMobile() ? step.srcMob : step.src;
+        video.load();
+      }
 
       vVideos.appendChild(video);
 
@@ -132,6 +138,8 @@
       modalOverlay.style.display = "none";
       document.body.style.overflow = "";
       resetUI();
+      const firstVideo = document.getElementById("video1");
+      if (firstVideo) firstVideo.style.display = "block";
     }, 300);
   }
 
@@ -142,7 +150,7 @@
 
     const correctSrc = isMobile() ? video.dataset.srcMob : video.dataset.srcDesk;
     
-    if (video.src !== correctSrc) {
+    if (!video.src || video.src.indexOf(correctSrc) === -1) {
       video.src = correctSrc;
       video.load();
     }
@@ -156,7 +164,7 @@
     } else {
       video.loop = false;
       video.ontimeupdate = () => {
-        if (video.duration - video.currentTime <= config.quizAppearanceBeforeEnd) {
+        if (video.duration > 0 && video.duration - video.currentTime <= config.quizAppearanceBeforeEnd) {
           showQuiz(video.dataset.step);
           video.ontimeupdate = null;
         }

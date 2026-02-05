@@ -2,8 +2,8 @@
   "use strict";
 
   const config = {
-    quizAppearanceBeforeEnd: 1.5,
-    switchBufferTime: 300, // Увеличим чуть-чуть для надежности перекрытия
+    quizAppearanceBeforeEnd: 0.8,
+    switchBufferTime: 1000, // Увеличим чуть-чуть для надежности перекрытия
     trigger: {
       bgImage: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
       previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",

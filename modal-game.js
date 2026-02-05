@@ -74,13 +74,13 @@
       video.dataset.step = step.step;
       video.dataset.srcDesk = step.src;
       video.dataset.srcMob = step.srcMob;
+      video.preload = "auto";
 
       if (step.loop) video.setAttribute("data-loop", "");
       
+      // Предзагружаем сразу путь для первого видео
       if (index === 0) {
-        video.style.display = "block";
         video.src = isMobile() ? step.srcMob : step.src;
-        video.load();
       }
 
       vVideos.appendChild(video);
@@ -138,39 +138,48 @@
       modalOverlay.style.display = "none";
       document.body.style.overflow = "";
       resetUI();
-      const firstVideo = document.getElementById("video1");
-      if (firstVideo) firstVideo.style.display = "block";
     }, 300);
   }
 
   function playVideo(videoId) {
-    resetUI();
-    const video = document.getElementById(videoId);
-    if (!video) return;
+    const targetVideo = document.getElementById(videoId);
+    if (!targetVideo) return;
 
-    const correctSrc = isMobile() ? video.dataset.srcMob : video.dataset.srcDesk;
+    // Сбрасываем квизы
+    allQuizzes.forEach((q) => q.classList.remove("is-visible"));
+
+    const correctSrc = isMobile() ? targetVideo.dataset.srcMob : targetVideo.dataset.srcDesk;
     
-    if (!video.src || video.src.indexOf(correctSrc) === -1) {
-      video.src = correctSrc;
-      video.load();
+    // Проверяем src, чтобы не перезагружать лишний раз
+    if (!targetVideo.src || targetVideo.src.indexOf(correctSrc) === -1) {
+      targetVideo.src = correctSrc;
+      targetVideo.load();
     }
 
-    video.style.display = "block";
-    video.currentTime = 0;
+    // Скрываем все видео кроме целевого, чтобы не было наслоения звука или кадров
+    allVideos.forEach(v => {
+        if(v !== targetVideo) {
+            v.pause();
+            v.style.display = "none";
+        }
+    });
 
-    if (video.hasAttribute("data-loop")) {
-      video.loop = true;
-      showQuiz(video.dataset.step);
+    targetVideo.style.display = "block";
+    targetVideo.currentTime = 0;
+
+    if (targetVideo.hasAttribute("data-loop")) {
+      targetVideo.loop = true;
+      showQuiz(targetVideo.dataset.step);
     } else {
-      video.loop = false;
-      video.ontimeupdate = () => {
-        if (video.duration > 0 && video.duration - video.currentTime <= config.quizAppearanceBeforeEnd) {
-          showQuiz(video.dataset.step);
-          video.ontimeupdate = null;
+      targetVideo.loop = false;
+      targetVideo.ontimeupdate = () => {
+        if (targetVideo.duration > 0 && targetVideo.duration - targetVideo.currentTime <= config.quizAppearanceBeforeEnd) {
+          showQuiz(targetVideo.dataset.step);
+          targetVideo.ontimeupdate = null;
         }
       };
     }
-    video.play();
+    targetVideo.play().catch(() => {});
   }
 
   function showQuiz(stepId) {
@@ -181,7 +190,8 @@
   function resetUI() {
     allVideos.forEach((v) => {
       v.pause();
-      v.style.display = "none";
+      // Оставляем только видео1 видимым, чтобы при открытии не было пустоты
+      v.style.display = v.id === "video1" ? "block" : "none";
       v.loop = false;
       v.ontimeupdate = null;
     });
@@ -209,11 +219,15 @@
       .v-trigger__bg { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 1; }
       .v-trigger__video { width: 80%; height: 70%; object-fit: contain; position: absolute; top: 10%; left: 10%; z-index: 2; border-radius: 50%; }
       .v-modal__overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 110001; opacity: 0; transition: opacity 0.3s ease; cursor: pointer; }
-      .v-modal__modal { background: #fff; border-radius: 12px; overflow: hidden; position: relative; transform: translateY(30px); transition: transform 0.3s ease; max-width: 80vw; aspect-ratio: 16/9; width: 100%; }
+      .v-modal__modal { background: #fff; border-radius: 12px; overflow: hidden; position: relative; transform: translateY(30px); transition: transform 0.3s ease; max-width: 80vw; aspect-ratio: 16/9; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
       .v-modal__container, .v-videos { width: 100%; height: 100%; position: relative; }
-      .v-videos { background: #000; }
+      .v-videos { background: #000; width: 100%; height: 100%; }
       .v-videos video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
-      .v-quiz { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.8s; z-index: 10; }
+      
+      /* Чтобы не было пинга, видео1 всегда готово к показу */
+      .v-videos video#video1 { display: block; }
+
+      .v-quiz { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; transition: opacity 0.8s; z-index: 10; background: rgba(0,0,0,0.3); }
       .v-quiz.is-visible { opacity: 1; visibility: visible; }
       .v-quiz__btn { position: absolute; inset: 0; background: red; opacity: 0.3; border: none; cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }

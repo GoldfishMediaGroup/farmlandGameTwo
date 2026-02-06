@@ -2,7 +2,7 @@
   "use strict";
 
   const config = {
-    quizAppearanceBeforeEnd: 1,
+    quizAppearanceBeforeEnd: 1.9,
     trigger: {
       bgImage: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/circle.png",
       previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",

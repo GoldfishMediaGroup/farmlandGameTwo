@@ -9,12 +9,12 @@
     },
     steps: [
       { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
-      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
-      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", autoNext: true }, // Пометка для автоперехода
-      { id: "video4", src: "4.mp4", srcMob: "4.mp4", step: "step-4", loop: true },
-      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", autoNext: true }, // Пометка для автоперехода
-      { id: "video6", src: "6.mp4", srcMob: "6.mp4", step: "step-6", loop: true },
-      { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
+
+      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", autoNext: true }, // Пометка для автоперехода
+      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", loop: true },
+      { id: "video4", src: "4.mp4", srcMob: "4.mp4", step: "step-4", autoNext: true }, // Пометка для автоперехода
+      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", loop: true },
+      { id: "video6", src: "6.mp4", srcMob: "6.mp4", step: "step-6", loop: false },
     ],
   };
 
@@ -231,7 +231,7 @@
       .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
       .v-quiz { position: absolute; inset: 0; z-index: 10; display: none; }
       .v-quiz.is-visible { display: block; }
-      .v-quiz__btn { position: absolute; inset: 0; background: transparent; border: 5px solid red; cursor: pointer; }
+      .v-quiz__btn { position: absolute; inset: 0; background: transparent;  cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
       @media (max-width: 768px) {
         .v-trigger { width: 100px; height: 100px; bottom: 20px; }

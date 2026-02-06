@@ -231,7 +231,7 @@
       .v-videos video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
       .v-quiz { position: absolute; inset: 0; z-index: 10; display: none; }
       .v-quiz.is-visible { display: block; }
-      .v-quiz__btn { position: absolute; inset: 0; background: transparent;  cursor: pointer; }
+      .v-quiz__btn { position: absolute; inset: 0; background: transparent; border: none; cursor: pointer; }
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
       @media (max-width: 768px) {
         .v-trigger { width: 100px; height: 100px; bottom: 20px; }

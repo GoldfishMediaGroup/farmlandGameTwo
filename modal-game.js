@@ -11,9 +11,9 @@
       { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
       { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", loop: false },
       { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", autoNext: true }, // Пометка для автоперехода
-      { id: "video4", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-4", loop: true },
+      { id: "video4", src: "4.mp4", srcMob: "4.mp4", step: "step-4", loop: true },
       { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", autoNext: true }, // Пометка для автоперехода
-      { id: "video6", src: "4,6.mp4", srcMob: "4,6.mp4", step: "step-6", loop: true },
+      { id: "video6", src: "6.mp4", srcMob: "6.mp4", step: "step-6", loop: true },
       { id: "video7", src: "7.mp4", srcMob: "7.mp4", step: "step-7", loop: false },
     ],
   };

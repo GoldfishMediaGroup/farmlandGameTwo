@@ -8,13 +8,13 @@
       previewVideo: "https://storage.yandexcloud.net/external-assets/tantum/modal-game/hello.mp4",
     },
     steps: [
-      { id: "video1", src: "1.mp4", srcMob: "1.mp4", step: "step-1", loop: false },
+      { id: "video1", src: "1.mp4", srcMob: "1mob.mp4", step: "step-1", loop: false },
 
-      { id: "video2", src: "2.mp4", srcMob: "2.mp4", step: "step-2", autoNext: true }, // Пометка для автоперехода
-      { id: "video3", src: "3.mp4", srcMob: "3.mp4", step: "step-3", loop: true },
-      { id: "video4", src: "4.mp4", srcMob: "4.mp4", step: "step-4", autoNext: true }, // Пометка для автоперехода
-      { id: "video5", src: "5.mp4", srcMob: "5.mp4", step: "step-5", loop: true },
-      { id: "video6", src: "6.mp4", srcMob: "6.mp4", step: "step-6", loop: false },
+      { id: "video2", src: "2.mp4", srcMob: "2mob.mp4", step: "step-2", autoNext: true }, // Пометка для автоперехода
+      { id: "video3", src: "3.mp4", srcMob: "3mob.mp4", step: "step-3", loop: true },
+      { id: "video4", src: "4.mp4", srcMob: "4mob.mp4", step: "step-4", autoNext: true }, // Пометка для автоперехода
+      { id: "video5", src: "5.mp4", srcMob: "5mob.mp4", step: "step-5", loop: true },
+      { id: "video6", src: "6.mp4", srcMob: "6mob.mp4", step: "step-6", loop: false },
     ],
   };
 
@@ -235,7 +235,7 @@
       .v-modal__close { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 24px; z-index: 1110; }
       @media (max-width: 768px) {
         .v-trigger { width: 100px; height: 100px; bottom: 20px; }
-        .v-modal__modal { max-width: 95vw; aspect-ratio: 1; }
+        .v-modal__modal { max-width: 95vw; aspect-ratio: 961/1080; }
       }
     `;
     document.head.appendChild(style);
